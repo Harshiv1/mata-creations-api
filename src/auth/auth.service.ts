@@ -9,16 +9,62 @@ export class AuthService {
   constructor(private jwt: JwtService) {}
 
   async register(dto: { name: string; email: string; phone: string; password: string; customerType?: string }) {
-    if (store.users.find((u) => u.email === dto.email)) {
+    if (dto.email && store.users.find((u) => u.email === dto.email)) {
       throw new BadRequestException('Email already registered');
+    }
+    if (dto.phone && store.users.find((u) => u.phone === dto.phone && u.phone !== '')) {
+      throw new BadRequestException('Phone number already registered');
     }
     const user: User = {
       id: uuid(),
       name: dto.name,
-      email: dto.email,
+      email: dto.email || '',
       phone: dto.phone || '',
       password: await bcryptjs.hash(dto.password, 10),
       customerType: (dto.customerType as any) || 'retail',
+      createdAt: new Date().toISOString(),
+    };
+    store.users.push(user);
+    return this.issueTokens(user);
+  }
+
+  async registerSendOtp(dto: { name: string; email?: string; phone?: string; password: string }) {
+    const contact = dto.email || dto.phone;
+    if (!contact) {
+      throw new BadRequestException('Either email or phone number is required');
+    }
+    if (dto.email && store.users.find((u) => u.email === dto.email)) {
+      throw new BadRequestException('Email already registered');
+    }
+    if (dto.phone && store.users.find((u) => u.phone === dto.phone && u.phone !== '')) {
+      throw new BadRequestException('Phone number already registered');
+    }
+    const otp = String(100000 + Math.floor(Math.random() * 900000));
+    store.otpStore.set(contact, otp);
+    store.pendingRegistrations.set(contact, dto);
+    console.log(`[REGISTER OTP] ${contact}: ${otp}`);
+    return { message: `OTP sent to ${contact}`, otp, contact };
+  }
+
+  async registerVerifyOtp(contact: string, otp: string) {
+    const saved = store.otpStore.get(contact);
+    if (!saved || saved !== otp) {
+      throw new BadRequestException('Invalid OTP');
+    }
+    const pending = store.pendingRegistrations.get(contact);
+    if (!pending) {
+      throw new BadRequestException('No pending registration found. Please register again.');
+    }
+    store.otpStore.delete(contact);
+    store.pendingRegistrations.delete(contact);
+
+    const user: User = {
+      id: uuid(),
+      name: pending.name,
+      email: pending.email || '',
+      phone: pending.phone || '',
+      password: await bcryptjs.hash(pending.password, 10),
+      customerType: 'retail',
       createdAt: new Date().toISOString(),
     };
     store.users.push(user);

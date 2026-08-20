@@ -10,6 +10,16 @@ export class AuthController {
     return this.authService.register(dto);
   }
 
+  @Post('register/send-otp')
+  registerSendOtp(@Body() dto: { name: string; email?: string; phone?: string; password: string }) {
+    return this.authService.registerSendOtp(dto);
+  }
+
+  @Post('register/verify-otp')
+  registerVerifyOtp(@Body() dto: { contact: string; otp: string }) {
+    return this.authService.registerVerifyOtp(dto.contact, dto.otp);
+  }
+
   @Post('login')
   login(@Body() dto: { email: string; password: string }) {
     return this.authService.login(dto.email, dto.password);

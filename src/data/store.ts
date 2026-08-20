@@ -190,7 +190,8 @@ class Store {
   orders: Order[] = [];
   reviews: Review[] = [];
   banners: Banner[] = banners;
-  otpStore: Map<string, string> = new Map(); // email -> otp
+  otpStore: Map<string, string> = new Map(); // email/phone -> otp
+  pendingRegistrations: Map<string, any> = new Map(); // contact -> registration data
   refreshTokens: Map<string, string> = new Map(); // userId -> refreshToken
 
   constructor() {
