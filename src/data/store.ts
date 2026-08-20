@@ -10,6 +10,7 @@ export interface User {
   phone: string;
   password: string;
   customerType: 'retail' | 'wholesale';
+  isAdmin?: boolean;
   avatar?: string;
   createdAt: string;
 }
@@ -190,6 +191,7 @@ class Store {
   orders: Order[] = [];
   reviews: Review[] = [];
   banners: Banner[] = banners;
+  adminEmails: string[] = [];
   otpStore: Map<string, string> = new Map(); // email/phone -> otp
   pendingRegistrations: Map<string, any> = new Map(); // contact -> registration data
   refreshTokens: Map<string, string> = new Map(); // userId -> refreshToken
@@ -204,8 +206,11 @@ class Store {
       phone: '9876543210',
       password: hash,
       customerType: 'retail',
+      isAdmin: true,
       createdAt: new Date().toISOString(),
     });
+    // Admin accounts by email
+    this.adminEmails = ['demo@matacreations.com', 'harshivaneja1@gmail.com'];
 
     // Seed some reviews
     for (let i = 0; i < 10; i++) {
